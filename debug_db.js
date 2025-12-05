@@ -11,7 +11,7 @@ dotenv.config();
 console.log('🔍 Debugging Supabase Connection...\n');
 
 // 1. Cek Environment Variables
-console.log('1️⃣ Checking Environment Variables:');
+console.log('1️ Checking Environment Variables:');
 console.log('   SUPABASE_URL:', process.env.SUPABASE_URL ? '✅ Set' : '❌ NOT SET');
 console.log('   SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '✅ Set' : '❌ NOT SET');
 console.log('   JWT_SECRET:', process.env.JWT_SECRET ? '✅ Set' : '❌ NOT SET');
@@ -21,15 +21,15 @@ console.log('');
 // 2. Cek Format URL
 if (process.env.SUPABASE_URL) {
   const url = process.env.SUPABASE_URL;
-  console.log('2️⃣ Checking SUPABASE_URL Format:');
+  console.log('2️ Checking SUPABASE_URL Format:');
   console.log('   URL:', url);
   
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    console.log('   ❌ ERROR: URL harus dimulai dengan http:// atau https://');
+    console.log('    ERROR: URL harus dimulai dengan http:// atau https://');
   } else if (!url.includes('.supabase.co')) {
-    console.log('   ⚠️  WARNING: URL tidak mengandung .supabase.co');
+    console.log('     WARNING: URL tidak mengandung .supabase.co');
   } else {
-    console.log('   ✅ Format URL valid');
+    console.log('    Format URL valid');
   }
   console.log('');
 }
@@ -37,7 +37,7 @@ if (process.env.SUPABASE_URL) {
 // 3. Cek Format API Key
 if (process.env.SUPABASE_ANON_KEY) {
   const key = process.env.SUPABASE_ANON_KEY;
-  console.log('3️⃣ Checking SUPABASE_ANON_KEY Format:');
+  console.log('   Checking SUPABASE_ANON_KEY Format:');
   console.log('   Key length:', key.length, 'characters');
   console.log('   Key preview:', key.substring(0, 20) + '...');
   
