@@ -1,6 +1,23 @@
 {
+  "name": "rest-api",
+  "version": "1.0.0",
+  "description": "REST API for Education Application",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "dev:win": "cross-env NODE_ENV=development nodemon index.js",
+    "prod": "cross-env NODE_ENV=production node index.js"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.86.0",
-    "express": "^5.1.0"
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "cross-env": "^7.0.3"
   }
 }
