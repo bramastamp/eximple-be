@@ -21,7 +21,6 @@ app.get('/', (req, res) => {
     });
 });
 
-// Routes
 try {
     const authRoutes = require('./lib/Routing/AuthRoute');
     const profileRoutes = require('./lib/Routing/ProfileRoute');
@@ -44,7 +43,6 @@ try {
     console.error(error.stack);
 }
 
-// Debug route (development only)
 if (process.env.NODE_ENV === 'development') {
     app.get('/api/debug/routes', (req, res) => {
         const routes = [];
