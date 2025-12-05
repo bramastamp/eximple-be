@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "rest-api-collection",
+		"_postman_id": "rest-api-collection-v2",
 		"name": "Rest API - Education App",
-		"description": "Collection untuk testing REST API aplikasi edukasi",
+		"description": "Collection untuk testing REST API aplikasi edukasi dengan flow register → verify email → login",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -10,7 +10,57 @@
 			"name": "Auth",
 			"item": [
 				{
-					"name": "1. Request OTP",
+					"name": "1. Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data) {",
+									"        pm.environment.set('user_id', response.data.user_id);",
+									"        pm.environment.set('email', response.data.email);",
+									"        pm.environment.set('username', response.data.username);",
+									"        if (response.data.otp_code) {",
+									"            pm.environment.set('otp_code', response.data.otp_code);",
+									"            console.log('OTP Code (dev mode):', response.data.otp_code);",
+									"        }",
+									"        console.log('User ID saved:', response.data.user_id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{username}}\",\n    \"email\": \"{{email}}\",\n    \"password\": \"{{password}}\",\n    \"confirm_password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{auth_url}}/register",
+							"host": [
+								"{{auth_url}}"
+							],
+							"path": [
+								"register"
+							]
+						},
+						"description": "Register user baru. OTP akan dikirim otomatis ke email setelah register berhasil."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Request OTP (Resend)",
 					"event": [
 						{
 							"listen": "test",
@@ -18,9 +68,9 @@
 								"exec": [
 									"if (pm.response.code === 200) {",
 									"    const response = pm.response.json();",
-									"    if (response.otp_code) {",
+									"    if (response.success && response.otp_code) {",
 									"        pm.environment.set('otp_code', response.otp_code);",
-									"        console.log('OTP Code saved:', response.otp_code);",
+									"        console.log('OTP Code (dev mode):', response.otp_code);",
 									"    }",
 									"}"
 								],
@@ -48,50 +98,8 @@
 							"path": [
 								"request-otp"
 							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "2. Register",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 201) {",
-									"    const response = pm.response.json();",
-									"    if (response.data && response.data.user_id) {",
-									"        pm.environment.set('user_id', response.data.user_id);",
-									"        console.log('User ID saved:', response.data.user_id);",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\": \"{{username}}\",\n    \"email\": \"{{email}}\",\n    \"password\": \"{{password}}\",\n    \"confirm_password\": \"{{password}}\",\n    \"otp_code\": \"{{otp_code}}\"\n}"
 						},
-						"url": {
-							"raw": "{{auth_url}}/register",
-							"host": [
-								"{{auth_url}}"
-							],
-							"path": [
-								"register"
-							]
-						}
+						"description": "Request OTP baru jika OTP sebelumnya expired. Hanya bisa digunakan untuk email yang sudah terdaftar tapi belum verified."
 					},
 					"response": []
 				},
@@ -117,7 +125,8 @@
 							"path": [
 								"verify-email"
 							]
-						}
+						},
+						"description": "Verify email dengan OTP code yang diterima. Setelah verify, user bisa login."
 					},
 					"response": []
 				},
@@ -130,12 +139,15 @@
 								"exec": [
 									"if (pm.response.code === 200) {",
 									"    const response = pm.response.json();",
-									"    if (response.data && response.data.token) {",
-									"        pm.environment.set('token', response.data.token);",
-									"        console.log('Token saved:', response.data.token.substring(0, 20) + '...');",
-									"    }",
-									"    if (response.data && response.data.user) {",
-									"        pm.environment.set('user_id', response.data.user.id);",
+									"    if (response.success && response.data) {",
+									"        if (response.data.token) {",
+									"            pm.environment.set('token', response.data.token);",
+									"            console.log('Token saved');",
+									"        }",
+									"        if (response.data.user) {",
+									"            pm.environment.set('user_id', response.data.user.id);",
+									"            console.log('User ID saved:', response.data.user.id);",
+									"        }",
 									"    }",
 									"}"
 								],
@@ -163,7 +175,8 @@
 							"path": [
 								"login"
 							]
-						}
+						},
+						"description": "Login dengan email dan password. Email harus sudah terverifikasi."
 					},
 					"response": []
 				},
@@ -185,11 +198,13 @@
 							"path": [
 								"me"
 							]
-						}
+						},
+						"description": "Get informasi user yang sedang login. Membutuhkan token authentication."
 					},
 					"response": []
 				}
-			]
+			],
+			"description": "Endpoints untuk authentication dan authorization"
 		},
 		{
 			"name": "Profile",
@@ -205,31 +220,35 @@
 							}
 						],
 						"url": {
-							"raw": "{{profile_url}}",
+							"raw": "{{profile_url}}/",
 							"host": [
 								"{{profile_url}}"
+							],
+							"path": [
+								""
 							]
-						}
+						},
+						"description": "Get profile user yang sedang login."
 					},
 					"response": []
 				},
 				{
-					"name": "2. Complete Profile",
+					"name": "2. Complete Profile (Onboarding)",
 					"request": {
 						"method": "PUT",
 						"header": [
 							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
 								"key": "Content-Type",
 								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"full_name\": \"{{full_name}}\",\n    \"gender\": \"{{gender}}\",\n    \"grade_level_id\": {{grade_level_id}},\n    \"class_id\": {{class_id}},\n    \"bio\": \"I love learning!\"\n}"
+							"raw": "{\n    \"full_name\": \"{{full_name}}\",\n    \"gender\": \"{{gender}}\",\n    \"grade_level_id\": {{grade_level_id}},\n    \"class_id\": {{class_id}},\n    \"bio\": \"{{bio}}\"\n}"
 						},
 						"url": {
 							"raw": "{{profile_url}}/complete",
@@ -239,7 +258,8 @@
 							"path": [
 								"complete"
 							]
-						}
+						},
+						"description": "Lengkapi profil user (onboarding). Dipanggil setelah login pertama kali."
 					},
 					"response": []
 				},
@@ -249,48 +269,51 @@
 						"method": "PUT",
 						"header": [
 							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
 								"key": "Content-Type",
 								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"full_name\": \"{{full_name}} Updated\",\n    \"bio\": \"Updated bio text\"\n}"
+							"raw": "{\n    \"bio\": \"Updated bio for {{username}}\"\n}"
 						},
 						"url": {
-							"raw": "{{profile_url}}",
+							"raw": "{{profile_url}}/",
 							"host": [
 								"{{profile_url}}"
+							],
+							"path": [
+								""
 							]
-						}
+						},
+						"description": "Update profil user. Bisa update sebagian atau semua field."
 					},
 					"response": []
 				}
-			]
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
+			],
+			"description": "Endpoints untuk mengelola profil user"
 		},
 		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						""
+					]
+				},
+				"description": "Check apakah API server berjalan dengan baik."
+			},
+			"response": []
 		}
 	],
 	"variable": [
@@ -301,4 +324,3 @@
 		}
 	]
 }
-
