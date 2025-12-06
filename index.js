@@ -17,7 +17,8 @@ app.get('/', (req, res) => {
         endpoints: {
             auth: '/api/auth',
             profile: '/api/profile',
-            learning: '/api/learning'
+            learning: '/api/learning',
+            progress: '/api/progress'
         }
     });
 });
@@ -26,10 +27,12 @@ try {
     const authRoutes = require('./lib/Routing/AuthRoute');
     const profileRoutes = require('./lib/Routing/ProfileRoute');
     const learningRoutes = require('./lib/Routing/LearningRoute');
+    const progressRoutes = require('./lib/Routing/ProgressRoute');
 
     app.use('/api/auth', authRoutes);
     app.use('/api/profile', profileRoutes);
     app.use('/api/learning', learningRoutes);
+    app.use('/api/progress', progressRoutes);
 
     console.log('Routes loaded successfully');
     console.log('Available endpoints:');
@@ -45,6 +48,11 @@ try {
     console.log('   - GET  /api/learning/subjects/:subjectId');
     console.log('   - GET  /api/learning/levels/:levelId');
     console.log('   - GET  /api/learning/levels/:levelId/materials');
+    console.log('   - POST /api/progress/levels/:levelId/start');
+    console.log('   - GET  /api/progress/levels/:levelId');
+    console.log('   - POST /api/progress/levels/:levelId/complete');
+    console.log('   - GET  /api/progress/my-progress');
+    console.log('   - GET  /api/progress/journey-map/:subjectLevelId');
 } catch (error) {
     console.error('Error loading routes:', error.message);
     console.error(error.stack);
@@ -96,7 +104,8 @@ app.use((req, res) => {
         availableEndpoints: {
             auth: '/api/auth/*',
             profile: '/api/profile/*',
-            learning: '/api/learning/*'
+            learning: '/api/learning/*',
+            progress: '/api/progress/*'
         }
     });
 });//call
