@@ -18,7 +18,12 @@ app.get('/', (req, res) => {
             auth: '/api/auth',
             profile: '/api/profile',
             learning: '/api/learning',
-            progress: '/api/progress'
+            progress: '/api/progress',
+            quiz: '/api/quiz',
+            leaderboard: '/api/leaderboard',
+            achievements: '/api/achievements',
+            notifications: '/api/notifications',
+            aiChat: '/api/ai-chat'
         }
     });
 });
@@ -28,11 +33,21 @@ try {
     const profileRoutes = require('./lib/Routing/ProfileRoute');
     const learningRoutes = require('./lib/Routing/LearningRoute');
     const progressRoutes = require('./lib/Routing/ProgressRoute');
+    const quizRoutes = require('./lib/Routing/QuizRoute');
+    const leaderboardRoutes = require('./lib/Routing/LeaderboardRoute');
+    const achievementRoutes = require('./lib/Routing/AchievementRoute');
+    const notificationRoutes = require('./lib/Routing/NotificationRoute');
+    const aiChatRoutes = require('./lib/Routing/AIChatRoute');
 
     app.use('/api/auth', authRoutes);
     app.use('/api/profile', profileRoutes);
     app.use('/api/learning', learningRoutes);
     app.use('/api/progress', progressRoutes);
+    app.use('/api/quiz', quizRoutes);
+    app.use('/api/leaderboard', leaderboardRoutes);
+    app.use('/api/achievements', achievementRoutes);
+    app.use('/api/notifications', notificationRoutes);
+    app.use('/api/ai-chat', aiChatRoutes);
 
     console.log('Routes loaded successfully');
     console.log('Available endpoints:');
@@ -105,7 +120,12 @@ app.use((req, res) => {
             auth: '/api/auth/*',
             profile: '/api/profile/*',
             learning: '/api/learning/*',
-            progress: '/api/progress/*'
+            progress: '/api/progress/*',
+            quiz: '/api/quiz/*',
+            leaderboard: '/api/leaderboard/*',
+            achievements: '/api/achievements/*',
+            notifications: '/api/notifications/*',
+            aiChat: '/api/ai-chat/*'
         }
     });
 });//call
