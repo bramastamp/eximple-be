@@ -16,7 +16,8 @@ app.get('/', (req, res) => {
         version: '1.0.0',
         endpoints: {
             auth: '/api/auth',
-            profile: '/api/profile'
+            profile: '/api/profile',
+            learning: '/api/learning'
         }
     });
 });
@@ -24,9 +25,11 @@ app.get('/', (req, res) => {
 try {
     const authRoutes = require('./lib/Routing/AuthRoute');
     const profileRoutes = require('./lib/Routing/ProfileRoute');
+    const learningRoutes = require('./lib/Routing/LearningRoute');
 
     app.use('/api/auth', authRoutes);
     app.use('/api/profile', profileRoutes);
+    app.use('/api/learning', learningRoutes);
 
     console.log('Routes loaded successfully');
     console.log('Available endpoints:');
@@ -38,6 +41,10 @@ try {
     console.log('   - GET  /api/profile');
     console.log('   - PUT  /api/profile/complete');
     console.log('   - PUT  /api/profile');
+    console.log('   - GET  /api/learning/subjects');
+    console.log('   - GET  /api/learning/subjects/:subjectId');
+    console.log('   - GET  /api/learning/levels/:levelId');
+    console.log('   - GET  /api/learning/levels/:levelId/materials');
 } catch (error) {
     console.error('Error loading routes:', error.message);
     console.error(error.stack);
@@ -88,7 +95,8 @@ app.use((req, res) => {
         path: req.originalUrl,
         availableEndpoints: {
             auth: '/api/auth/*',
-            profile: '/api/profile/*'
+            profile: '/api/profile/*',
+            learning: '/api/learning/*'
         }
     });
 });//call
