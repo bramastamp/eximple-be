@@ -4,3 +4,5 @@ node_modules/*
 VALIDATION.md/*
 documentation/*
 postman/*
+schema/*
+.gitignore*

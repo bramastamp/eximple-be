@@ -1,10 +1,44 @@
 const express = require('express');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// CORS Configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:8000',
+      'http://127.0.0.1:8000',
+      'http://192.168.123.1:8000',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000'
+    ];
+    
+    // In development, allow all origins
+    if (process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    
+    // In production, check against allowed origins
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 // Middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -23,7 +57,8 @@ app.get('/', (req, res) => {
             leaderboard: '/api/leaderboard',
             achievements: '/api/achievements',
             notifications: '/api/notifications',
-            aiChat: '/api/ai-chat'
+            aiChat: '/api/ai-chat',
+            admin: '/api/admin'
         }
     });
 });
@@ -38,6 +73,7 @@ try {
     const achievementRoutes = require('./lib/Routing/AchievementRoute');
     const notificationRoutes = require('./lib/Routing/NotificationRoute');
     const aiChatRoutes = require('./lib/Routing/AIChatRoute');
+    const adminRoutes = require('./lib/Routing/AdminRoute');
 
     app.use('/api/auth', authRoutes);
     app.use('/api/profile', profileRoutes);
@@ -48,29 +84,21 @@ try {
     app.use('/api/achievements', achievementRoutes);
     app.use('/api/notifications', notificationRoutes);
     app.use('/api/ai-chat', aiChatRoutes);
+    app.use('/api/admin', adminRoutes);
 
-    console.log('Routes loaded successfully');
-    console.log('Available endpoints:');
-    console.log('   - POST /api/auth/request-otp');
-    console.log('   - POST /api/auth/register');
-    console.log('   - POST /api/auth/verify-email');
-    console.log('   - POST /api/auth/login');
-    console.log('   - GET  /api/auth/me');
-    console.log('   - GET  /api/profile');
-    console.log('   - PUT  /api/profile/complete');
-    console.log('   - PUT  /api/profile');
-    console.log('   - GET  /api/learning/subjects');
-    console.log('   - GET  /api/learning/subjects/:subjectId');
-    console.log('   - GET  /api/learning/levels/:levelId');
-    console.log('   - GET  /api/learning/levels/:levelId/materials');
-    console.log('   - POST /api/progress/levels/:levelId/start');
-    console.log('   - GET  /api/progress/levels/:levelId');
-    console.log('   - POST /api/progress/levels/:levelId/complete');
-    console.log('   - GET  /api/progress/my-progress');
-    console.log('   - GET  /api/progress/journey-map/:subjectLevelId');
+    // Alias routes for frontend compatibility (without /learning prefix)
+    // These routes require authentication, so we need to add auth middleware
+    const { authenticate } = require('./lib/middleware/auth');
+    const LearningController = require('./lib/controllers/Learning/LearningController');
+    
+    // Alias for /api/subjects/class/:classId
+    app.get('/api/subjects/class/:classId', authenticate, LearningController.getSubjectsByClass);
+    
+    // Alias for /api/levels/subject-level/:subjectLevelId
+    app.get('/api/levels/subject-level/:subjectLevelId', authenticate, LearningController.getLevelsBySubjectLevel);
 } catch (error) {
-    console.error('Error loading routes:', error.message);
-    console.error(error.stack);
+    // Error loading routes
+    console.error('Error loading routes:', error);
 }
 
 if (process.env.NODE_ENV === 'development') {
@@ -101,7 +129,6 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
     res.status(err.status || 500).json({
         success: false,
         message: err.message || 'Internal server error',
@@ -110,7 +137,6 @@ app.use((err, req, res, next) => {
 });
 
 app.use((req, res) => {
-    console.log(`Route not found: ${req.method} ${req.originalUrl}`);
     res.status(404).json({
         success: false,
         message: 'Route not found',
@@ -125,11 +151,29 @@ app.use((req, res) => {
             leaderboard: '/api/leaderboard/*',
             achievements: '/api/achievements/*',
             notifications: '/api/notifications/*',
-            aiChat: '/api/ai-chat/*'
+            aiChat: '/api/ai-chat/*',
+            admin: '/api/admin/*',
+            subjects: '/api/subjects/class/:classId',
+            levels: '/api/levels/subject-level/:subjectLevelId'
         }
     });
 });//call
 
-app.listen(port, () => {
-    console.log(`Server Running, http://localhost:${port}`);
+const server = app.listen(port, () => {
+    if (process.env.NODE_ENV !== 'production') {
+        console.log(`Server is running on port ${port}`);
+        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`API available at: http://localhost:${port}`);
+    }
+}).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`Error: Port ${port} is already in use`);
+        if (process.env.NODE_ENV !== 'production') {
+            console.error(`Solution: Stop the process using port ${port} or use a different PORT in .env`);
+        }
+        process.exit(1);
+    } else {
+        console.error('Error starting server:', err.message);
+        process.exit(1);
+    }
 });
