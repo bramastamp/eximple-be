@@ -86,18 +86,14 @@ try {
     app.use('/api/ai-chat', aiChatRoutes);
     app.use('/api/admin', adminRoutes);
 
-    // Alias routes for frontend compatibility (without /learning prefix)
-    // These routes require authentication, so we need to add auth middleware
     const { authenticate } = require('./lib/middleware/auth');
     const LearningController = require('./lib/controllers/Learning/LearningController');
     
-    // Alias for /api/subjects/class/:classId
     app.get('/api/subjects/class/:classId', authenticate, LearningController.getSubjectsByClass);
-    
-    // Alias for /api/levels/subject-level/:subjectLevelId
     app.get('/api/levels/subject-level/:subjectLevelId', authenticate, LearningController.getLevelsBySubjectLevel);
+    app.get('/api/levels/:levelId', authenticate, LearningController.getLevelById);
+    app.get('/api/levels/:levelId/materials', authenticate, LearningController.getMaterialsByLevel);
 } catch (error) {
-    // Error loading routes
     console.error('Error loading routes:', error);
 }
 
@@ -157,7 +153,7 @@ app.use((req, res) => {
             levels: '/api/levels/subject-level/:subjectLevelId'
         }
     });
-});//call
+});
 
 const server = app.listen(port, () => {
     if (process.env.NODE_ENV !== 'production') {
