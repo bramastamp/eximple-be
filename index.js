@@ -17,11 +17,22 @@ const corsOptions = {
       'http://127.0.0.1:8000',
       'http://192.168.123.1:8000',
       'http://localhost:3000',
-      'http://127.0.0.1:3000'
+      'http://127.0.0.1:3000',
+      'http://localhost:5173',        // Vite default port
+      'http://127.0.0.1:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+      'http://localhost:3001',
+      'http://127.0.0.1:3001'
     ];
     
-    // In development, allow all origins
-    if (process.env.NODE_ENV === 'development') {
+    // In development, allow all origins (including devtunnels)
+    if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+      return callback(null, true);
+    }
+    
+    // Allow devtunnels domains in development
+    if (origin.includes('.devtunnels.ms') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
       return callback(null, true);
     }
     
@@ -33,12 +44,15 @@ const corsOptions = {
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400 // 24 hours
 };
 
 // Middleware
 app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -94,34 +108,7 @@ try {
     app.get('/api/levels/:levelId', authenticate, LearningController.getLevelById);
     app.get('/api/levels/:levelId/materials', authenticate, LearningController.getMaterialsByLevel);
 } catch (error) {
-    console.error('Error loading routes:', error);
-}
-
-if (process.env.NODE_ENV === 'development') {
-    app.get('/api/debug/routes', (req, res) => {
-        const routes = [];
-        app._router.stack.forEach((middleware) => {
-            if (middleware.route) {
-                routes.push({
-                    method: Object.keys(middleware.route.methods)[0].toUpperCase(),
-                    path: middleware.route.path
-                });
-            } else if (middleware.name === 'router') {
-                middleware.handle.stack.forEach((handler) => {
-                    if (handler.route) {
-                        routes.push({
-                            method: Object.keys(handler.route.methods)[0].toUpperCase(),
-                            path: handler.route.path
-                        });
-                    }
-                });
-            }
-        });
-        res.json({
-            success: true,
-            routes: routes
-        });
-    });
+    // Error loading routes
 }
 
 app.use((err, req, res, next) => {
@@ -156,20 +143,11 @@ app.use((req, res) => {
 });
 
 const server = app.listen(port, () => {
-    if (process.env.NODE_ENV !== 'production') {
-        console.log(`Server is running on port ${port}`);
-        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`API available at: http://localhost:${port}`);
-    }
+    // Server started
 }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-        console.error(`Error: Port ${port} is already in use`);
-        if (process.env.NODE_ENV !== 'production') {
-            console.error(`Solution: Stop the process using port ${port} or use a different PORT in .env`);
-        }
         process.exit(1);
     } else {
-        console.error('Error starting server:', err.message);
         process.exit(1);
     }
 });
