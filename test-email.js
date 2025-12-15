@@ -96,26 +96,23 @@ async function testEmail() {
     return;
   }
 
-  // Test 1: Verify Connection
+  // Test 1: Verify Connection (Skip di production - bisa timeout)
   console.log('📡 Test 1: Verifying connection...');
-  try {
-    await Promise.race([
-      transporter.verify(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout after 10 seconds')), 10000))
-    ]);
-    console.log('✅ Connection verified!');
-  } catch (error) {
-    console.error('❌ Connection failed:', error.message);
-    console.error('   Error Code:', error.code);
-    if (error.code === 'ECONNREFUSED') {
-      console.error('   ⚠️  Port mungkin di-block oleh VPS provider!');
-      console.error('   💡 Solusi: Coba port 587 atau 465, atau gunakan SendGrid/Mailgun');
-    } else if (error.code === 'ETIMEDOUT') {
-      console.error('   ⚠️  Connection timeout - port mungkin di-block atau SMTP server tidak accessible');
-    } else if (error.code === 'EAUTH') {
-      console.error('   ⚠️  Authentication failed - check EMAIL_USER dan EMAIL_PASS');
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  if (!isProduction) {
+    try {
+      await Promise.race([
+        transporter.verify(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout after 10 seconds')), 10000))
+      ]);
+      console.log('✅ Connection verified!');
+    } catch (error) {
+      console.warn('⚠️  Connection verification failed (will try to send anyway):', error.message);
+      console.warn('   This is common in production - verification will happen during send');
     }
-    return;
+  } else {
+    console.log('⏭️  Skipping verification in production (will verify during send)');
   }
 
   // Test 2: Send Test Email
@@ -123,6 +120,7 @@ async function testEmail() {
   try {
     const testEmail = process.env.TEST_EMAIL || process.env.EMAIL_USER;
     console.log(`   To: ${testEmail}`);
+    console.log('   ⏳ Sending (this may take 10-15 seconds)...');
     
     const info = await Promise.race([
       transporter.sendMail({
@@ -132,7 +130,7 @@ async function testEmail() {
         text: 'Ini adalah test email dari production server.',
         html: '<p>Ini adalah <b>test email</b> dari production server.</p>'
       }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Send timeout after 15 seconds')), 15000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Send timeout after 30 seconds')), 30000))
     ]);
     
     console.log('✅ Email sent successfully!');
@@ -145,15 +143,22 @@ async function testEmail() {
     console.error('   Response Code:', error.responseCode);
     console.error('   Response:', error.response);
     
-    if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
-      console.error('\n💡 Kemungkinan port di-block. Solusi:');
-      console.error('   1. Coba port 587 atau 465');
-      console.error('   2. Request port unblock dari VPS provider');
-      console.error('   3. Gunakan SMTP relay service (SendGrid, Mailgun)');
+    if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
+      console.error('\n💡 Kemungkinan port di-block atau network issue. Solusi:');
+      console.error('   1. Test koneksi: nc -zv smtp.gmail.com 587');
+      console.error('   2. Check firewall: sudo ufw status');
+      console.error('   3. Request port unblock dari VPS provider (Digital Ocean)');
+      console.error('   4. Gunakan SMTP relay service (SendGrid, Mailgun) - lebih reliable');
+      console.error('   5. Atau setup SMTP server sendiri di VPS');
     } else if (error.code === 'EAUTH') {
       console.error('\n💡 Authentication failed. Check:');
-      console.error('   1. EMAIL_USER dan EMAIL_PASS benar');
+      console.error('   1. EMAIL_USER dan EMAIL_PASSWORD benar');
       console.error('   2. Untuk Gmail, gunakan App Password (bukan password biasa)');
+      console.error('   3. Pastikan 2-Step Verification sudah aktif');
+    } else if (error.responseCode) {
+      console.error('\n💡 SMTP Server Error:');
+      console.error(`   Response Code: ${error.responseCode}`);
+      console.error(`   Response: ${error.response}`);
     }
   }
 }
