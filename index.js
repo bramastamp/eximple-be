@@ -10,15 +10,14 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
-    // List of allowed origins
+  
     const allowedOrigins = [
       'http://localhost:8000',
       'http://127.0.0.1:8000',
       'http://192.168.123.1:8000',
       'http://localhost:3000',
       'http://127.0.0.1:3000',
-      'http://localhost:5173',        // Vite default port
+      'http://localhost:5173',         // Vite default port
       'http://127.0.0.1:5173',
       'http://localhost:5174',
       'http://localhost:5175',
@@ -26,17 +25,14 @@ const corsOptions = {
       'http://127.0.0.1:3001'
     ];
     
-    // In development, allow all origins (including devtunnels)
     if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
       return callback(null, true);
     }
     
-    // Allow devtunnels domains in development
     if (origin.includes('.devtunnels.ms') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
       return callback(null, true);
     }
     
-    // In production, check against allowed origins
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -47,16 +43,14 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400 // 24 hours
+  maxAge: 86400 
 };
 
-// Middleware
 app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
 app.get('/', (req, res) => {
     res.json({
         success: true,
@@ -88,6 +82,7 @@ try {
     const notificationRoutes = require('./lib/Routing/NotificationRoute');
     const aiChatRoutes = require('./lib/Routing/AIChatRoute');
     const adminRoutes = require('./lib/Routing/AdminRoute');
+    const helloWorldRoutes = require('./lib/Routing/HelloWorld');
 
     app.use('/api/auth', authRoutes);
     app.use('/api/profile', profileRoutes);
@@ -99,7 +94,7 @@ try {
     app.use('/api/notifications', notificationRoutes);
     app.use('/api/ai-chat', aiChatRoutes);
     app.use('/api/admin', adminRoutes);
-
+    app.use('/api/hello-world', helloWorldRoutes);  
     const { authenticate } = require('./lib/middleware/auth');
     const LearningController = require('./lib/controllers/Learning/LearningController');
     
@@ -108,7 +103,6 @@ try {
     app.get('/api/levels/:levelId', authenticate, LearningController.getLevelById);
     app.get('/api/levels/:levelId/materials', authenticate, LearningController.getMaterialsByLevel);
 } catch (error) {
-    // Error loading routes
 }
 
 app.use((err, req, res, next) => {
@@ -137,13 +131,13 @@ app.use((req, res) => {
             aiChat: '/api/ai-chat/*',
             admin: '/api/admin/*',
             subjects: '/api/subjects/class/:classId',
-            levels: '/api/levels/subject-level/:subjectLevelId'
+            levels: '/api/levels/subject-level/:subjectLevelId',
+            helloWorld: '/api/hello-world/*'
         }
     });
 });
 
 const server = app.listen(port, () => {
-    // Server started
 }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
         process.exit(1);
