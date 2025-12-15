@@ -103,6 +103,9 @@ try {
     app.get('/api/levels/:levelId', authenticate, LearningController.getLevelById);
     app.get('/api/levels/:levelId/materials', authenticate, LearningController.getMaterialsByLevel);
 } catch (error) {
+    console.error('❌ Error loading routes:', error.message);
+    console.error(error.stack);
+    process.exit(1);
 }
 
 app.use((err, req, res, next) => {

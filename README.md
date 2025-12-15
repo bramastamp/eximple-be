@@ -492,6 +492,7 @@ Production: https://api.yourdomain.com/api
 #### Authentication (`/api/auth`)
 - `POST /register` - Register user baru
 - `POST /login` - Login user
+- `POST /google` - Register/Login dengan Google (OAuth 2.0) - Auto-create user jika belum ada
 - `GET /me` - Get current user data
 - `POST /verify-email` - Verify email dengan OTP
 - `POST /resend-otp` - Resend OTP code
